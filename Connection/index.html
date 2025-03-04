@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO</title>
+</head>
+<body>
+    <p>Hello world</p>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let socket = io();
+
+        socket.on('newUser', (data) => {
+            document.body.innerHTML = '';
+            document.write(data.message);
+        });
+        
+    </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Drawing</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        canvas {
+            border: 2px solid black;
+            cursor: crosshair;
+        }
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+        }
+        input[type="color"] {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <input type="color" id="colorPicker" />
+        <button id="clearBtn">Clear</button>
+    </div>
+
+    <canvas id="drawingCanvas" width="800" height="600"></canvas>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const colorPicker = document.getElementById('colorPicker');
+        const clearBtn = document.getElementById('clearBtn');
+
+        let drawing = false;
+        let currentColor = '#000000';
+        let lastX = 0;
+        let lastY = 0;
+
+        // Set initial drawing color
+        colorPicker.addEventListener('input', (e) => {
+            currentColor = e.target.value;
+        });
+
+        // Handle drawing on the canvas
+        canvas.addEventListener('mousedown', (e) => {
+            drawing = true;
+            lastX = e.offsetX;
+            lastY = e.offsetY;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (drawing) {
+                draw(lastX, lastY, e.offsetX, e.offsetY, currentColor);
+                lastX = e.offsetX;
+                lastY = e.offsetY;
+
+                // Send drawing data to server
+                socket.emit('drawing', {
+                    fromX: lastX,
+                    fromY: lastY,
+                    toX: e.offsetX,
+                    toY: e.offsetY,
+                    color: currentColor
+                });
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            drawing = false;
+        });
+
+        canvas.addEventListener('mouseout', () => {
+            drawing = false;
+        });
+
+        // Draw function
+        function draw(fromX, fromY, toX, toY, color) {
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 5;
+            ctx.stroke();
+        }
+
+        // Listen for drawing events from other users
+        socket.on('drawing', (data) => {
+            draw(data.fromX, data.fromY, data.toX, data.toY, data.color);
+        });
+
+        // Clear the canvas
+        clearBtn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Chat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h2>⚡ Live Chat Room ⚡</h2>
+    <p id="user-id-display">Your ID: Loading...</p>
+    <form id="update-id-form" class="f-update">
+        <!-- <input id="new-user-id" placeholder="Enter new User ID">
+        <button type="submit">Update ID</button> -->
+    </form>
+    <div class="chat-container">
+        <ul id="message"></ul>
+        <form id="chat-form">
+            <input id="m" placeholder="Type your message...">
+            <button type="submit">🚀 Send</button>
+        </form>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const form = document.getElementById('chat-form');
+        const input = document.getElementById('m');
+        const messages = document.getElementById('message');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const updateIdForm = document.getElementById('update-id-form');
+        const updateIdInput = document.getElementById('new-user-id');
+
+        socket.on('user connected', (userId) => {
+            userIdDisplay.textContent = `Your ID: ${userId}`;
+        });
+
+        updateIdForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newUserId = updateIdInput.value.trim();
+            if (newUserId) {
+                socket.emit('update user id', newUserId);
+                updateIdInput.value = '';
+            }
+        });
+
+        socket.on('user id updated', (newId) => {
+            userIdDisplay.textContent = `Your ID: ${newId}`;
+        });
+
+        socket.on('chat message', (msg) => {
+            const li = document.createElement('li');
+            li.textContent = msg;
+            li.classList.add('received');
+            messages.appendChild(li);
+            messages.scrollTop = messages.scrollHeight;
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const msg = input.value.trim();
+            if (msg) {
+                socket.emit('chat message', msg);
+                const li = document.createElement('li');
+                li.textContent = msg;
+                li.classList.add('sent');
+                messages.appendChild(li);
+                messages.scrollTop = messages.scrollHeight;
+                input.value = '';
+            }
+        });
+    </script>
+</body>
+</html>

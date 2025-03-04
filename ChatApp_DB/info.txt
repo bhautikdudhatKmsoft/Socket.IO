@@ -1,0 +1,5 @@
+addUser api = http://localhost:7410/api/add-user
+
+update-user = http://localhost:7410/api/update-user
+
+get-user = http://localhost:7410/api/get-user
