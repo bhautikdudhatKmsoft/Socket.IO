@@ -1,46 +1,10 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Socket.IO Chat</title>
-    <!-- <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background-color: #f4f4f9;
-        }
-        #messages {
-            list-style-type: none;
-            padding: 0;
-            width: 100%;
-            max-width: 500px;
-            margin: 20px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            max-height: 300px;
-            overflow-y: scroll;
-        }
-        #messages li {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-        }
-        input {
-            width: 100%;
-            max-width: 500px;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-    </style> -->
+  
 </head>
 <body>
     <h1>Real-Time Chat with Socket.IO</h1>
@@ -70,6 +34,69 @@
                 socket.emit('chat message', msg);
                 input.value = ''; 
             }
+        });
+    </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT Chat</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+    <h1>Real-Time Chat with MQTT</h1>
+    <ul id="messages"></ul>
+    <form id="chat-form">
+        <input id="m" placeholder="Type a message..." />
+        <button type="submit">Send</button>
+    </form>
+
+    <script>
+        const mqttBroker = 'wss://test.mosquitto.org:8081'; // MQTT WebSocket broker
+        const chatTopic = 'chat/messages';
+        const notifyTopic = 'chat/notifications';
+
+        const client = mqtt.connect(mqttBroker);
+        const form = document.getElementById('chat-form');
+        const input = document.getElementById('m');
+        const messages = document.getElementById('messages');
+
+        client.on('connect', () => {
+            console.log('Connected to MQTT broker');
+            client.subscribe(chatTopic);
+            client.subscribe(notifyTopic);
+
+            // Notify backend that a new user joined
+            fetch('/user-joined');
+        });
+
+        client.on('message', (topic, message) => {
+            const li = document.createElement('li');
+            li.textContent = message.toString();
+            if (topic === notifyTopic) {
+                li.style.fontWeight = 'bold'; // Highlight system messages
+            }
+            messages.appendChild(li);
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const msg = input.value.trim();
+            if (msg) {
+                client.publish(chatTopic, msg);
+                input.value = ''; 
+            }
+        });
+
+        // Notify backend when user leaves
+        window.addEventListener('beforeunload', () => {
+            fetch('/user-left');
         });
     </script>
 </body>
